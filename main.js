@@ -3,6 +3,7 @@ async function a(a, b = undefined) {
   const { exports: c } = await WebAssembly.instantiate(a, {
     env: {
       abort(a, b, c, d) {
+        console.log("abort", a, b, c, d);
         throw new Error(i(a) + " in " + i(b) + ":" + c + ":" + d);
       },
       "console.log"(a) {
@@ -12,10 +13,8 @@ async function a(a, b = undefined) {
         return Date.now() * Math.random();
       },
       gtk() {
-        const a = [];
-        for (const b in globalThis) {
-          a.push(b);
-        }
+        // prettier-ignore
+        const a = ["name","onmessage","onmessageerror","cancelAnimationFrame","close","postMessage","requestAnimationFrame","webkitRequestFileSystem","webkitRequestFileSystemSync","webkitResolveLocalFileSystemSyncURL","webkitResolveLocalFileSystemURL","a0_0x17c7","a0_0x18bb","a0_0x465520","a0_0x4c1599","TEMPORARY","PERSISTENT","self","location","onerror","onlanguagechange","navigator","onrejectionhandled","onunhandledrejection","isSecureContext","origin","trustedTypes","performance","crypto","indexedDB","fonts","createImageBitmap","fetch","importScripts","queueMicrotask","caches","crossOriginIsolated","scheduler","atob","btoa","clearInterval","clearTimeout","reportError","setInterval","setTimeout","structuredClone","addEventListener","dispatchEvent","removeEventListener"];
         return j(a.sort().join(";"));
       },
       gts(a, b) {
@@ -34,12 +33,14 @@ async function a(a, b = undefined) {
   class f extends Number {}
   const g = new FinalizationRegistry(n);
   function h(a, b) {
-    const c = i(a)
-      .split(".")
-      .reduce((a, b) => a[b], globalThis);
+    const accessedField = i(a).split(".");
+    const c = accessedField.reduce((a, b) => a[b], globalThis);
     if (typeof c === "function") {
-      return c.bind(globalThis)(...(b ? k(b) : []));
+      const args = b ? k(b) : [];
+      console.log("called function:", c, "with args:", args);
+      return c.bind(globalThis)(...args);
     } else {
+      console.log("accessed field:", accessedField, c);
       return c;
     }
   }
@@ -135,18 +136,25 @@ async function b(a, b, c) {
   };
   return fetch("/.well-known/vercel/security/request-challenge", e);
 }
-self.onmessage = async (c) => {
+
+async function essa() {
   try {
-    const { token: d, version: e } = c.data;
-    const f = await fetch(
-      "/.well-known/vercel/security/static/challenge.v2.wasm"
+    const { token: d, version: e } = {
+      token:
+        "2.1716714678.60.MDM3ODVlODI5ZWFiNDIxZDMwNWNmNmYxMWQyZDY1NDY7NDdkY2EyZDg7MTdlYzdlOGFiY2YyYWQzNWU3NTYyZDE3ODA0M2ViYzJkOWFkMzI0Yzs0.09be371cf4e973ce32715000f53ea2f8",
+      version: "2",
+    };
+    const wasmBuffer = await require("fs/promises").readFile(
+      "challenge.v2.wasm"
     );
-    const g = await WebAssembly.compileStreaming(f);
+    const g = await WebAssembly.compile(wasmBuffer);
     const h = await a(g);
-    const i = await h.solve(d);
-    await b(d, i, e);
-    self.postMessage(null);
+    const soymaxxing = h.solve(d);
+    console.log("solved challenge:", soymaxxing);
+    // await b(d, i, e);
+    // self.postMessage(null);
   } catch (a) {
     console.error("Failed to solve challenge:", a);
   }
-};
+}
+essa();
